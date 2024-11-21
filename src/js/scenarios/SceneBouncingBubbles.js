@@ -8,14 +8,9 @@ class Bubble {
         this.x = x
         this.y = y
         this.radius = radius
-
         this.time = new GlobalContext().time
-
-        /** speed */
         this.vx = randomRange(-200, 200)
         this.vy = randomRange(-200, 200)
-
-        /** gravity */
         this.gx = 0
         this.gy = 0
     }
@@ -28,25 +23,13 @@ class Bubble {
         this.context.closePath()
     }
 
-    update(width, height) {
-        /** gravity bounce */
-        this.gx = this.x > this.radius ? this.gx : 0
-        this.gx = this.x < width - this.radius ? this.gx : 0
-        // this.gy = this.y > this.radius ? this.gy : 0
-        // this.gy = this.y < height - this.radius ? this.gy : 0
+    update(width, height, speed = 1) {
+        this.gx = (this.x > this.radius && this.x < width - this.radius) ? this.gx : 0
+        this.x += (this.vx + this.gx) * this.time.delta / 1000 * speed
+        this.y += (this.vy + this.gy) * this.time.delta / 1000 * speed
 
-        this.x += (this.vx + this.gx) * this.time.delta / 1000
-        this.y += (this.vy + this.gy) * this.time.delta / 1000
-
-        /** bounce */
-        // if (this.x < 0 || this.x > width) this.vx *= -1
-        // if (this.y < 0 || this.y > height) this.vy *= -1
-
-        /** bounce corrected */
         this.vx = this.x < this.radius ? Math.abs(this.vx) : this.vx
         this.vx = this.x > width - this.radius ? -Math.abs(this.vx) : this.vx
-        // this.vy = this.y < this.radius ? Math.abs(this.vy) : this.vy
-        // this.vy = this.y > height - this.radius ? -Math.abs(this.vy) : this.vy
     }
 }
 
@@ -54,61 +37,68 @@ export default class SceneBouncingBubbles extends Scene2D {
     constructor(id) {
         super(id)
 
-        /** debug */
         this.params = {
-            speed: 1, // positif ou negatif
+            speed: 1,
             threshold: 50,
             radius: 5,
             nBubbles: 20,
             gStrength: 300
         }
+
         if (!!this.debugFolder) {
+            this.debugFolder.add(this.params, "speed", -1, 1, 0.1)
             this.debugFolder.add(this.params, "threshold", 0, 200)
             this.debugFolder.add(this.params, "radius", 0, 30, 0.1).name("Rayon").onChange(() => {
                 if (!!this.bubbles) {
-                    this.bubbles.forEach(b => { b.radius = this.params.radius })
+                    this.bubbles.forEach(b => {
+                        b.radius = this.params.radius
+                    })
                 }
             })
-            this.debugFolder.add(this.params, "nBubbles", 3, 50).onFinishChange(() => {
+            this.debugFolder.add(this.params, "nBubbles", 0, 50).onFinishChange(() => {
                 this.generateBubbles()
             })
             this.debugFolder.add(this.params, "gStrength", 0, 400)
         }
 
-        /** device orientation */
+        this.globalContext = new GlobalContext()
         this.globalContext.useDeviceOrientation = true
         this.orientation = this.globalContext.orientation
 
-        /** init */
         this.generateBubbles()
-        this.draw()
     }
 
     generateBubbles() {
-        /** generate bubbles */
         this.bubbles = []
         for (let i = 0; i < this.params.nBubbles; i++) {
             const x_ = this.width * Math.random()
             const y_ = this.height * Math.random()
-            const bubble_ = new Bubble(this.context, x_, y_, 5)
+            const bubble_ = new Bubble(this.context, x_, y_, this.params.radius)
             this.bubbles.push(bubble_)
         }
     }
 
-    addBubble(x, y) {
-        const bubble_ = new Bubble(this.context, x, y, this.params.radius )
+    addBubble(x, y, vx = randomRange(-200, 200), vy = randomRange(-200, 200)) {
+        const bubble_ = new Bubble(this.context, x, y, this.params.radius)
+        bubble_.vx = vx
+        bubble_.vy = vy
         this.bubbles.push(bubble_)
         return bubble_
     }
 
+    removeBubble(bubble) {
+        const index = this.bubbles.indexOf(bubble)
+        if (index !== -1) {
+            this.bubbles.splice(index, 1)
+        }
+    }
+
     draw() {
-        /** style */
         this.context.strokeStyle = "white"
         this.context.fillStyle = "black"
         this.context.lineWidth = 2
         this.context.lineCap = "round"
 
-        /** draw */
         if (!!this.bubbles) {
             for (let i = 0; i < this.bubbles.length; i++) {
                 const current_ = this.bubbles[i]
@@ -125,16 +115,31 @@ export default class SceneBouncingBubbles extends Scene2D {
                 }
             }
 
-            this.bubbles.forEach(b => {
-                b.draw()
-            })
+            this.bubbles.forEach(b => b.draw())
         }
     }
 
     update() {
         if (!!this.bubbles) {
-            this.bubbles.forEach(b => {
-                b.update(this.width, this.height)
+            this.bubbles.forEach((b, index) => {
+                b.update(this.width, this.height, this.params.speed)
+
+                // Transition logic for Scene 1
+                if (this.id === "canvas-scene-1" && b.y > this.height) {
+                    // Emit bubble transition event to Scene 3D
+                    this.globalContext.emit('bubble-transition', {
+                        fromScene: this.id,
+                        toScene: "canvas-scene-2",
+                        bubble: {
+                            x: b.x,
+                            y: b.y,
+                            vx: b.vx,
+                            vy: b.vy,
+                            radius: b.radius
+                        }
+                    })
+                    this.removeBubble(b)  // Supprime la bulle une fois qu'elle est envoyée
+                }
             })
         }
 
@@ -161,7 +166,6 @@ export default class SceneBouncingBubbles extends Scene2D {
         gx_ = clamp(gx_, -1, 1)
         gy_ = clamp(gy_, -1, 1)
 
-        /** update bubbles */
         if (!!this.bubbles) {
             this.bubbles.forEach(b => {
                 b.gx = gx_ * this.params.gStrength

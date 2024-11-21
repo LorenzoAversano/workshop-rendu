@@ -76,6 +76,15 @@ export default class SceneGravityCubes extends Scene3D {
         this.resize()
     }
 
+    addCube(x, y, color = 'red') {
+        const cube = new GravityCube(50, color)
+        cube.setPosition(x, y)
+        this.add(cube)
+        this.cubes.push(cube)
+        Composite.add(this.engine.world, cube.body)
+        return cube
+    }
+
     removeCube(cube) {
         cube.geometry.dispose()
         cube.material.dispose()
@@ -99,29 +108,29 @@ export default class SceneGravityCubes extends Scene3D {
         this.camera.right = this.width / 2
         this.camera.top = this.height / 2
         this.camera.bottom = -this.height / 2
-    
+
         if (!!this.wallRight) {
             // Right wall
             this.wallRight.setPosition(this.width / 2, 0)
             this.wallRight.setSize(THICKNESS, this.height)
-    
+
             // Left wall
             this.wallLeft.setPosition(-this.width / 2, 0)
             this.wallLeft.setSize(THICKNESS, this.height)
-    
+
             // Trait partant du mur gauche (à 30% de la hauteur)
             this.wallDiagonalLeft.setPosition(
                 -this.width / 2 + this.width * 0.35, 
                 this.height / 2 * 0.4  // Légèrement plus bas
             )
-            this.wallDiagonalLeft.setSize(this.width * 0.65, THICKNESS)
-    
+            this.wallDiagonalLeft.setSize(this.width * 0.7, THICKNESS)
+
             // Trait partant du mur droit (à 70% de la hauteur)
             this.wallDiagonalRight.setPosition(
                 this.width / 2 - this.width * 0.35, 
                 -this.height / 2 * 0.4  // Légèrement plus haut
             )
-            this.wallDiagonalRight.setSize(this.width * 0.65, THICKNESS)
+            this.wallDiagonalRight.setSize(this.width * 0.7, THICKNESS)
         }
     }
 
