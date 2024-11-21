@@ -59,7 +59,7 @@ export default class SceneBouncingBubbles extends Scene2D {
             speed: 1, // positif ou negatif
             threshold: 50,
             radius: 5,
-            nBubbles: 3,
+            nBubbles: 20,
             gStrength: 300
         }
         if (!!this.debugFolder) {
