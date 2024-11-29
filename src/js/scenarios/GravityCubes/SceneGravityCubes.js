@@ -12,7 +12,6 @@ export default class SceneGravityCubes extends Scene3D {
     constructor(id) {
         super(id)
 
-        /** debug */
         this.params = { gScale: 1 }
         if(!!this.debugFolder) {
             this.debugFolder.add(this.params, "gScale", 0.5, 10, 0.1).onChange(() => {
@@ -20,7 +19,6 @@ export default class SceneGravityCubes extends Scene3D {
             })
         }
 
-        /** orthographic camera */
         this.camera = new THREE.OrthographicCamera(
             -this.width / 2, this.width / 2, 
             this.height / 2, -this.height / 2, 
@@ -28,12 +26,10 @@ export default class SceneGravityCubes extends Scene3D {
         )
         this.camera.position.z = 1000
 
-        /** walls */
         this.wallRight = new Wall('blue')
         this.wallLeft = new Wall('green')
         this.wallBottom = new Wall('red')
         
-        // Additional walls/lines
         this.wallDiagonalLeft = new Wall('purple')
         this.wallDiagonalRight = new Wall('orange')
 
@@ -42,7 +38,6 @@ export default class SceneGravityCubes extends Scene3D {
         this.add(this.wallDiagonalLeft)
         this.add(this.wallDiagonalRight)
 
-        /** cubes */
         this.cubes = []
         const colors = ['red', 'yellow', 'blue']
         for(let i=0; i < 10; i++) {
@@ -54,7 +49,6 @@ export default class SceneGravityCubes extends Scene3D {
             this.cubes.push(cube_)
         }
 
-        /** matter js */
         this.engine = Engine.create({ render: { visible: false } })
         this.engine.gravity.scale *= this.params.gScale
         this.bodies = [
@@ -68,11 +62,9 @@ export default class SceneGravityCubes extends Scene3D {
         this.runner = Runner.create()
         Runner.run(this.runner, this.engine)
 
-        /** device orientation */
         this.globalContext.useDeviceOrientation = true
         this.orientation = this.globalContext.orientation
 
-        /** resize */
         this.resize()
     }
 
@@ -110,25 +102,21 @@ export default class SceneGravityCubes extends Scene3D {
         this.camera.bottom = -this.height / 2
 
         if (!!this.wallRight) {
-            // Right wall
             this.wallRight.setPosition(this.width / 2, 0)
             this.wallRight.setSize(THICKNESS, this.height)
 
-            // Left wall
             this.wallLeft.setPosition(-this.width / 2, 0)
             this.wallLeft.setSize(THICKNESS, this.height)
 
-            // Trait partant du mur gauche (à 30% de la hauteur)
             this.wallDiagonalLeft.setPosition(
                 -this.width / 2 + this.width * 0.35, 
-                this.height / 2 * 0.4  // Légèrement plus bas
+                this.height / 2 * 0.4  
             )
             this.wallDiagonalLeft.setSize(this.width * 0.7, THICKNESS)
 
-            // Trait partant du mur droit (à 70% de la hauteur)
             this.wallDiagonalRight.setPosition(
                 this.width / 2 - this.width * 0.35, 
-                -this.height / 2 * 0.4  // Légèrement plus haut
+                -this.height / 2 * 0.4 
             )
             this.wallDiagonalRight.setSize(this.width * 0.7, THICKNESS)
         }
@@ -144,7 +132,6 @@ export default class SceneGravityCubes extends Scene3D {
         let coordinates_ = `${gx_.toFixed(2)}, ${gy_.toFixed(2)}`
         this.debug.domDebug = coordinates_
 
-        /** update engine gravity */
         this.engine.gravity.x = gx_
         this.engine.gravity.y = gy_
     }
